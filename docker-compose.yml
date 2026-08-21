@@ -1,0 +1,145 @@
+# ==============================================================================
+# CodeSync - Docker Compose Orchestration
+# ==============================================================================
+services:
+  # ----------------------------------------------------------------------------
+  # Nginx Gateway & Reverse Proxy
+  # ----------------------------------------------------------------------------
+  gateway:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: codesync-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      client:
+        condition: service_started
+      api:
+        condition: service_healthy
+      collab-server:
+        condition: service_healthy
+    networks:
+      - codesync-network
+
+  # ----------------------------------------------------------------------------
+  # React + Vite Client Frontend
+  # ----------------------------------------------------------------------------
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
+        - VITE_COLLAB_WS_URL=${VITE_COLLAB_WS_URL:-ws://localhost:8080/collaboration}
+    container_name: codesync-client
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
+      - VITE_COLLAB_WS_URL=${VITE_COLLAB_WS_URL:-ws://localhost:8080/collaboration}
+    networks:
+      - codesync-network
+
+  # ----------------------------------------------------------------------------
+  # FastAPI Code Execution & Room API
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: codesync-api
+    restart: unless-stopped
+    environment:
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:8080,http://127.0.0.1:5173}
+      - EXECUTION_TIMEOUT_SECONDS=${EXECUTION_TIMEOUT_SECONDS:-5}
+      - MAX_EXECUTION_TIMEOUT_SECONDS=${MAX_EXECUTION_TIMEOUT_SECONDS:-15}
+      - MAX_SOURCE_SIZE_BYTES=${MAX_SOURCE_SIZE_BYTES:-102400}
+      - MAX_STDIN_SIZE_BYTES=${MAX_STDIN_SIZE_BYTES:-65536}
+      - MAX_OUTPUT_LENGTH=${MAX_OUTPUT_LENGTH:-65536}
+      - CONTAINER_MEMORY_LIMIT=${CONTAINER_MEMORY_LIMIT:-256m}
+      - CONTAINER_CPU_QUOTA=${CONTAINER_CPU_QUOTA:-1.0}
+      - CONTAINER_PIDS_LIMIT=${CONTAINER_PIDS_LIMIT:-64}
+    volumes:
+      # Docker socket mount for isolated sandbox execution management
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - codesync-network
+
+  # ----------------------------------------------------------------------------
+  # Yjs Collaboration WebSockets Server
+  # ----------------------------------------------------------------------------
+  collab-server:
+    build:
+      context: ./collab-server
+      dockerfile: Dockerfile
+    container_name: codesync-collab
+    restart: unless-stopped
+    environment:
+      - PORT=1234
+      - HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:1234/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - codesync-network
+
+  # ----------------------------------------------------------------------------
+  # Pre-built Runner Images for Sandboxed Execution
+  # ----------------------------------------------------------------------------
+  runner-python:
+    build:
+      context: ./runner-images/python
+      dockerfile: Dockerfile
+    image: codesync-runner-python:latest
+    container_name: codesync-builder-python
+    restart: "no"
+    entrypoint: ["echo", "Runner Python Image Ready"]
+    networks:
+      - codesync-network
+
+  runner-javascript:
+    build:
+      context: ./runner-images/javascript
+      dockerfile: Dockerfile
+    image: codesync-runner-javascript:latest
+    container_name: codesync-builder-js
+    restart: "no"
+    entrypoint: ["echo", "Runner JavaScript Image Ready"]
+    networks:
+      - codesync-network
+
+  runner-cpp:
+    build:
+      context: ./runner-images/cpp
+      dockerfile: Dockerfile
+    image: codesync-runner-cpp:latest
+    container_name: codesync-builder-cpp
+    restart: "no"
+    entrypoint: ["echo", "Runner C++ Image Ready"]
+    networks:
+      - codesync-network
+
+  runner-java:
+    build:
+      context: ./runner-images/java
+      dockerfile: Dockerfile
+    image: codesync-runner-java:latest
+    container_name: codesync-builder-java
+    restart: "no"
+    entrypoint: ["echo", "Runner Java Image Ready"]
+    networks:
+      - codesync-network
+
+networks:
+  codesync-network:
+    driver: bridge
