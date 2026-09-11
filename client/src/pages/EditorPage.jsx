@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import FileExplorer from '../components/FileExplorer';
 import Editor from '../components/Editor';
 import OutputPanel from '../components/OutputPanel';
+import Collaborators from '../components/Collaborators';
 import ShareModal from '../components/ShareModal';
 import TemplatesModal from '../components/TemplatesModal';
 import { useCollaboration } from '../hooks/useCollaboration';

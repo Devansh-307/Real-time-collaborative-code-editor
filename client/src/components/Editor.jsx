@@ -11,6 +11,7 @@ export default function Editor({
   onRun,
   onToggleExplorer,
   onToggleOutput,
+  onOpenTemplates,
 }) {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -66,7 +67,11 @@ export default function Editor({
     if (!editorRef.current || !monacoRef.current || !activeFile || !awareness) return;
 
     if (bindingRef.current) {
-      bindingRef.current.destroy();
+      try {
+        bindingRef.current.destroy();
+      } catch (e) {
+        // ignore cleanup error
+      }
       bindingRef.current = null;
     }
 
@@ -95,7 +100,11 @@ export default function Editor({
 
     return () => {
       if (bindingRef.current) {
-        bindingRef.current.destroy();
+        try {
+          bindingRef.current.destroy();
+        } catch (e) {
+          // ignore cleanup error
+        }
         bindingRef.current = null;
       }
     };
