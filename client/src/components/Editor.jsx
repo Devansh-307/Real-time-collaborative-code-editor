@@ -99,7 +99,7 @@ export default function Editor({
         bindingRef.current = null;
       }
     };
-  }, [activeFile?.id, activeFile?.name, getYText, awareness]);
+  }, [activeFile?.id, activeFile?.name, getYText, awareness, editorReady]);
 
   // Handle Monaco mount and register shortcuts
   const handleEditorDidMount = (editor, monaco) => {

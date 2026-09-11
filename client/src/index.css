@@ -47,15 +47,6 @@ body {
   z-index: 10;
 }
 
-.yRemoteSelectionHead::after {
-  position: absolute;
-  content: ' ';
-  border: 3px solid;
-  border-radius: 4px;
-  left: -4px;
-  top: -5px;
-}
-
 /* Remote cursor user name tooltip tag */
 .yRemoteSelectionHead .yRemoteNameTag {
   position: absolute;

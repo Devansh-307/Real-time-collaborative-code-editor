@@ -58,11 +58,29 @@ export function createCollaborationSession(roomId, user) {
             background-color: ${color}40 !important;
           }
           .yRemoteSelectionHead-${clientId} {
-            border-color: ${color} !important;
+            position: absolute !important;
+            border-left: 2px solid ${color} !important;
+            height: 100% !important;
+            box-sizing: border-box !important;
+            z-index: 10 !important;
           }
           .yRemoteSelectionHead-${clientId}::after {
-            border-color: ${color} !important;
+            position: absolute !important;
+            content: '${name}' !important;
+            top: -1.5em !important;
+            left: -2px !important;
+            font-size: 10px !important;
+            line-height: 1 !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
             background-color: ${color} !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+            white-space: nowrap !important;
+            pointer-events: none !important;
+            z-index: 100 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
           }
         `;
       }
