@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.routers import execution, health, rooms
+from app.routers import ai, execution, health, rooms
 
 # Configure structured logging
 logging.basicConfig(
@@ -61,6 +61,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 app.include_router(rooms.router)
 app.include_router(execution.router)
+app.include_router(ai.router)
 
 
 @app.get("/")

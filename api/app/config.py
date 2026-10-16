@@ -3,7 +3,8 @@ CodeSync Backend Configuration Module.
 Loads configuration from environment variables with strong typing and default fallbacks.
 """
 
-from typing import List
+from typing import List, Optional
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -40,16 +41,28 @@ class Settings(BaseSettings):
         "java": "codesync-runner-java:latest"
     }
 
+    # AI Pair Programmer Settings
+    AI_PROVIDER: str = "gemini"               # gemini | openai | mock
+    AI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
+    AI_RATE_LIMIT_PER_MINUTE: int = 20        # Max requests per room per minute
+    AI_CACHE_TTL_SECONDS: int = 3600          # 1 hour response cache TTL
+    AI_MAX_CACHE_ENTRIES: int = 500
+    AI_MAX_CODE_CHARS: int = 12000            # Max characters before truncation kicks in
+    AI_MAX_OUTPUT_CHARS: int = 4000           # Max stdout/stderr chars sent to prompt
+
     @property
     def cors_origins_list(self) -> List[str]:
         if not self.CORS_ORIGINS or "*" in self.CORS_ORIGINS:
             return ["*"]
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        extra = "allow"
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="allow"
+    )
 
 
 settings = Settings()
